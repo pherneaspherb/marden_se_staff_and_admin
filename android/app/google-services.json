@@ -1,0 +1,67 @@
+{
+  "project_info": {
+    "project_number": "585591392320",
+    "project_id": "mardenhub",
+    "storage_bucket": "mardenhub.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:585591392320:android:ac00e5737744add32077a5",
+        "android_client_info": {
+          "package_name": "com.example.final_project_laundry"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB6kkqvkgon4_bmlS4lg_d2pC2qIRT9vwE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:585591392320:android:898b4afd377e44892077a5",
+        "android_client_info": {
+          "package_name": "com.example.marden_se_staff_and_admin"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB6kkqvkgon4_bmlS4lg_d2pC2qIRT9vwE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:585591392320:android:d9ec7302c1069fd12077a5",
+        "android_client_info": {
+          "package_name": "marden.com"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB6kkqvkgon4_bmlS4lg_d2pC2qIRT9vwE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
