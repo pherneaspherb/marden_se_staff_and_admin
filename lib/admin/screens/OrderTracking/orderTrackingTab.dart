@@ -46,10 +46,7 @@ class _OrderTrackingTabState extends State<OrderTrackingTab>
           Expanded(
             child: TabBarView(
               controller: _mainTabController,
-              children: const [
-                LaundryOrderListView(),
-                WaterOrderListView(),
-              ],
+              children: const [LaundryOrderListView(), WaterOrderListView()],
             ),
           ),
         ],
@@ -112,143 +109,173 @@ class OrderListView extends StatelessWidget {
         final customerDocs = customerSnapshot.data!.docs;
 
         return ListView(
-          children: customerDocs.expand((customerDoc) {
-            final customerData = customerDoc.data() as Map<String, dynamic>?;
-            if (customerData == null) return <Widget>[];
+          children:
+              customerDocs.expand((customerDoc) {
+                final customerData =
+                    customerDoc.data() as Map<String, dynamic>?;
+                if (customerData == null) return <Widget>[];
 
-            final defaultAddress =
-                customerData['defaultAddress'] as Map<String, dynamic>?;
+                final defaultAddress =
+                    customerData['defaultAddress'] as Map<String, dynamic>?;
 
-            final customerId = customerDoc.id;
+                final customerId = customerDoc.id;
 
-            return [
-              FutureBuilder<QuerySnapshot>(
-                future: FirebaseFirestore.instance
-                    .collection('customers')
-                    .doc(customerId)
-                    .collection(orderType)
-                    .get(),
-                builder: (context, orderSnapshot) {
-                  if (!orderSnapshot.hasData ||
-                      orderSnapshot.data!.docs.isEmpty) {
-                    return const SizedBox.shrink();
-                  }
+                return [
+                  FutureBuilder<QuerySnapshot>(
+                    future:
+                        FirebaseFirestore.instance
+                            .collection('customers')
+                            .doc(customerId)
+                            .collection(orderType)
+                            .get(),
+                    builder: (context, orderSnapshot) {
+                      if (!orderSnapshot.hasData ||
+                          orderSnapshot.data!.docs.isEmpty) {
+                        return const SizedBox.shrink();
+                      }
 
-                  return Column(
-                    children: orderSnapshot.data!.docs.map((orderDoc) {
-                      final orderData =
-                          orderDoc.data() as Map<String, dynamic>?;
+                      return Column(
+                        children:
+                            orderSnapshot.data!.docs.map((orderDoc) {
+                              final orderData =
+                                  orderDoc.data() as Map<String, dynamic>?;
 
-                      if (orderData == null) return const SizedBox.shrink();
+                              if (orderData == null)
+                                return const SizedBox.shrink();
 
-                      final addressMap =
-                          orderData['address'] as Map<String, dynamic>?;
+                              final addressMap =
+                                  orderData['address'] as Map<String, dynamic>?;
 
-                      final formattedAddress = (addressMap != null &&
-                              addressMap.isNotEmpty)
-                          ? "${addressMap['house'] ?? ''}, ${addressMap['barangay'] ?? ''}, ${addressMap['municipality'] ?? ''}, ${addressMap['city'] ?? ''}"
-                          : defaultAddress != null
-                              ? "${defaultAddress['street'] ?? ''}, ${defaultAddress['barangay'] ?? ''}, ${defaultAddress['municipality'] ?? ''}, ${defaultAddress['city'] ?? ''}"
-                              : "No address provided";
+                              final formattedAddress =
+                                  (addressMap != null && addressMap.isNotEmpty)
+                                      ? "${addressMap['house'] ?? ''}, ${addressMap['barangay'] ?? ''}, ${addressMap['municipality'] ?? ''}, ${addressMap['city'] ?? ''}"
+                                      : defaultAddress != null
+                                      ? "${defaultAddress['street'] ?? ''}, ${defaultAddress['barangay'] ?? ''}, ${defaultAddress['municipality'] ?? ''}, ${defaultAddress['city'] ?? ''}"
+                                      : "No address provided";
 
-                      final status = orderData['status'] ?? 'Unknown';
-                      final price = orderData[totalKey]?.toString() ?? '0.00';
-                      final serviceInfo =
-                          orderData[serviceKey]?.toString() ?? 'N/A';
+                              final status = orderData['status'] ?? 'Unknown';
+                              final rawPrice = orderData[totalKey];
+                              final price =
+                                  (rawPrice is int)
+                                      ? rawPrice.toDouble()
+                                      : (rawPrice is double)
+                                      ? rawPrice
+                                      : double.tryParse(
+                                            rawPrice?.toString() ?? '0.0',
+                                          ) ??
+                                          0.0;
 
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8.0,
-                          vertical: 4.0,
-                        ),
-                        child: Card(
-                          color: const Color(0xFF40025B),
-                          elevation: 2,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(12.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  "ORDER ${orderData['orderId'] ?? 'No ID'}",
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
+                              final serviceInfo =
+                                  orderData[serviceKey]?.toString() ?? 'N/A';
+
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8.0,
+                                  vertical: 4.0,
+                                ),
+                                child: Card(
+                                  color: const Color(0xFF40025B),
+                                  elevation: 2,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
                                   ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  "${customerData['firstName']} ${customerData['lastName']}",
-                                  style: const TextStyle(
-                                    color: Colors.white70,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  "Email: ${customerData['email'] ?? 'N/A'}",
-                                  style: const TextStyle(color: Colors.white),
-                                ),
-                                Text(
-                                  "Phone: ${customerData['phoneNumber'] ?? 'N/A'}",
-                                  style: const TextStyle(color: Colors.white),
-                                ),
-                                Text(
-                                  "Address: $formattedAddress",
-                                  style: const TextStyle(color: Colors.white),
-                                ),
-                                Text(
-                                  "Service: $serviceInfo",
-                                  style: const TextStyle(color: Colors.white),
-                                ),
-                                const SizedBox(height: 6),
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      "₱$price",
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16,
-                                      ),
-                                    ),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 12,
-                                        vertical: 6,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius: BorderRadius.circular(20),
-                                      ),
-                                      child: Text(
-                                        status,
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          color:
-                                              Color.fromARGB(255, 42, 214, 108),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(12.0),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          "ORDER ${orderData['orderId'] ?? 'No ID'}",
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16,
+                                          ),
                                         ),
-                                      ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          "${customerData['firstName']} ${customerData['lastName']}",
+                                          style: const TextStyle(
+                                            color: Colors.white70,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          "Email: ${customerData['email'] ?? 'N/A'}",
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                        Text(
+                                          "Phone: ${customerData['phoneNumber'] ?? 'N/A'}",
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                        Text(
+                                          "Address: $formattedAddress",
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                        Text(
+                                          "Service: $serviceInfo",
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 6),
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text(
+                                              "₱${price.toStringAsFixed(2)}",
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 16,
+                                              ),
+                                            ),
+                                            Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 12,
+                                                    vertical: 6,
+                                                  ),
+                                              decoration: BoxDecoration(
+                                                color: Colors.white,
+                                                borderRadius:
+                                                    BorderRadius.circular(20),
+                                              ),
+                                              child: Text(
+                                                status,
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Color.fromARGB(
+                                                    255,
+                                                    42,
+                                                    214,
+                                                    108,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
                                     ),
-                                  ],
+                                  ),
                                 ),
-                              ],
-                            ),
-                          ),
-                        ),
+                              );
+                            }).toList(),
                       );
-                    }).toList(),
-                  );
-                },
-              ),
-            ];
-          }).toList(),
+                    },
+                  ),
+                ];
+              }).toList(),
         );
       },
     );

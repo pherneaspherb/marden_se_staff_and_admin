@@ -34,7 +34,7 @@ class _DashboardPageState extends State<DashboardPage>
         Tab(text: "Manage Accounts"),
       ];
 
-      tabViews = const [
+      tabViews = [
         OrderStatusPage(),
         OrderTrackingTab(),
         InventoryWidget(),

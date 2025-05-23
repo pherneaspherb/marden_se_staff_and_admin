@@ -14,7 +14,12 @@ Future<Uint8List> _generatePdfBytes(
   final pdf = pw.Document();
 
   final orderId = orderData['orderId'] ?? 'No ID';
-  final total = orderData['totalAmount'] ?? orderData['totalPrice'] ?? '0.00';
+
+  // Safely parse total as a double
+  final totalRaw =
+      orderData['totalAmount'] ?? orderData['totalPrice'] ?? '0.00';
+  final double total = double.tryParse(totalRaw.toString()) ?? 0.00;
+
   final serviceType =
       orderData['serviceType'] ?? orderData['containerType'] ?? 'N/A';
 
@@ -33,7 +38,7 @@ Future<Uint8List> _generatePdfBytes(
                 'Customer: ${customerData['firstName']} ${customerData['lastName']}',
               ),
               pw.Text('Service: $serviceType'),
-              pw.Text('Total Amount: ₱$total'),
+              pw.Text('Total Amount: PHP ${total.toStringAsFixed(2)}'),
               pw.Text('Order ID: $orderId'),
             ],
           ),

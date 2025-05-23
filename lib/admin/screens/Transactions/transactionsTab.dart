@@ -140,8 +140,10 @@ class TransactionListView extends StatelessWidget {
                                       ? "${defaultAddress['street'] ?? ''}, ${defaultAddress['barangay'] ?? ''}, ${defaultAddress['municipality'] ?? ''}, ${defaultAddress['city'] ?? ''}"
                                       : "No address provided";
 
-                              final price =
-                                  orderData[totalKey]?.toString() ?? '0.00';
+                              final priceDouble =
+                                  (orderData[totalKey] as num?)?.toDouble() ??
+                                  0.0;
+                              final price = priceDouble.toStringAsFixed(2);
                               final serviceInfo =
                                   orderData[serviceKey]?.toString() ?? 'N/A';
 
@@ -314,7 +316,9 @@ class ReceiptView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final orderId = orderData['orderId'] ?? 'No ID';
-    final total = orderData['totalAmount'] ?? orderData['totalPrice'] ?? '0.00';
+    final totalValue =
+        (orderData['totalAmount'] ?? orderData['totalPrice']) as num? ?? 0.0;
+    final total = totalValue.toStringAsFixed(2);
     final serviceType =
         orderData['serviceType'] ?? orderData['containerType'] ?? 'N/A';
 
