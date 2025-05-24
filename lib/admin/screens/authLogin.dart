@@ -18,6 +18,9 @@ class _AuthLoginPageState extends State<AuthLoginPage> {
   final _passwordController = TextEditingController();
   bool _isLoading = false;
 
+  // Track password visibility
+  bool _obscurePassword = true;
+
   void _login() async {
     if (_isLoading) return;
 
@@ -34,12 +37,10 @@ class _AuthLoginPageState extends State<AuthLoginPage> {
         final user = userCredential.user;
 
         if (user != null) {
-          // Use dynamic collection based on role
-          final doc =
-              await FirebaseFirestore.instance
-                  .collection(widget.role == 'admin' ? 'admins' : 'staff')
-                  .doc(user.uid)
-                  .get();
+          final doc = await FirebaseFirestore.instance
+              .collection(widget.role == 'admin' ? 'admins' : 'staff')
+              .doc(user.uid)
+              .get();
 
           if (doc.exists) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -50,7 +51,6 @@ class _AuthLoginPageState extends State<AuthLoginPage> {
               ),
             );
 
-            // Navigate dynamically based on role
             Navigator.pushReplacementNamed(
               context,
               widget.role == 'admin' ? '/admin-dashboard' : '/staff-dashboard',
@@ -79,9 +79,8 @@ class _AuthLoginPageState extends State<AuthLoginPage> {
           }
         }
 
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(errorMessage)));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(errorMessage)));
       } finally {
         setState(() => _isLoading = false);
       }
@@ -116,20 +115,23 @@ class _AuthLoginPageState extends State<AuthLoginPage> {
                 ),
               ),
               const SizedBox(height: 4),
-              TextButton(
-                onPressed: () {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => AuthSignUpPage(role: widget.role),
-                    ),
-                  );
-                },
-                child: Text(
-                  "Don't have an account? Sign up.",
-                  style: TextStyle(color: Colors.white70, fontSize: 12),
+
+              // Only show Sign-up button if role is admin
+              if (widget.role == 'admin')
+                TextButton(
+                  onPressed: () {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => AuthSignUpPage(role: widget.role),
+                      ),
+                    );
+                  },
+                  child: const Text(
+                    "Don't have an account? Sign up.",
+                    style: TextStyle(color: Colors.white70, fontSize: 12),
+                  ),
                 ),
-              ),
 
               const SizedBox(height: 16),
               Form(
@@ -157,17 +159,16 @@ class _AuthLoginPageState extends State<AuthLoginPage> {
                           vertical: 15,
                         ),
                       ),
-                      child:
-                          _isLoading
-                              ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  color: Color(0xFF40025B),
-                                  strokeWidth: 2,
-                                ),
-                              )
-                              : const Text('Log In'),
+                      child: _isLoading
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                color: Color(0xFF40025B),
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Text('Log In'),
                     ),
                   ],
                 ),
@@ -186,7 +187,7 @@ class _AuthLoginPageState extends State<AuthLoginPage> {
   }) {
     return TextFormField(
       controller: controller,
-      obscureText: isPassword,
+      obscureText: isPassword ? _obscurePassword : false,
       style: const TextStyle(color: Colors.white),
       decoration: InputDecoration(
         labelText: label,
@@ -197,6 +198,19 @@ class _AuthLoginPageState extends State<AuthLoginPage> {
           borderRadius: BorderRadius.circular(6),
           borderSide: BorderSide.none,
         ),
+        suffixIcon: isPassword
+            ? IconButton(
+                icon: Icon(
+                  _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                  color: Colors.white70,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _obscurePassword = !_obscurePassword;
+                  });
+                },
+              )
+            : null,
       ),
       validator: (value) {
         if (value == null || value.isEmpty) return 'Please enter $label';

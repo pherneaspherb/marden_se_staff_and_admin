@@ -77,8 +77,8 @@ class _InventoryWidgetState extends State<InventoryWidget>
               {'name': 'Bleach', 'stock': 0},
             ]
             : [
-              {'name': 'Empty Tube Water Containers', 'stock': 0},
-              {'name': 'Empty Jug Water Containers', 'stock': 0},
+              {'name': 'Tube Water Containers', 'stock': 0},
+              {'name': 'Jug Water Containers', 'stock': 0},
               {'name': 'Purification Chemicals', 'stock': 0},
             ];
 
@@ -124,7 +124,7 @@ class _InventoryWidgetState extends State<InventoryWidget>
               labelColor: Colors.white,
               unselectedLabelColor: Colors.white70,
               indicatorColor: Colors.white,
-              tabs: const [Tab(text: 'Laundry'), Tab(text: 'Water')],
+              tabs: const [Tab(text: 'Laundry Inventory'), Tab(text: 'Water Inventory')],
             ),
           ),
           Expanded(

@@ -20,7 +20,8 @@ class _UpdateServicesTabState extends State<UpdateServicesTab> {
   }
 
   Future<void> loadServices() async {
-    final laundryDoc = await _firestore.collection('services').doc('laundry').get();
+    final laundryDoc =
+        await _firestore.collection('services').doc('laundry').get();
     final waterDoc = await _firestore.collection('services').doc('water').get();
 
     setState(() {
@@ -30,12 +31,19 @@ class _UpdateServicesTabState extends State<UpdateServicesTab> {
     });
   }
 
-  Map<String, TextEditingController> _mapToControllers(Map<String, dynamic> data) {
-    return data.map((key, value) => MapEntry(
-        key, TextEditingController(text: value?.toString() ?? '')));
+  Map<String, TextEditingController> _mapToControllers(
+    Map<String, dynamic> data,
+  ) {
+    return data.map(
+      (key, value) =>
+          MapEntry(key, TextEditingController(text: value?.toString() ?? '')),
+    );
   }
 
-  Future<void> updateServices(String category, Map<String, TextEditingController> controllers) async {
+  Future<void> updateServices(
+    String category,
+    Map<String, TextEditingController> controllers,
+  ) async {
     final Map<String, dynamic> updates = {};
 
     for (var entry in controllers.entries) {
@@ -44,8 +52,11 @@ class _UpdateServicesTabState extends State<UpdateServicesTab> {
 
       final parsed = double.tryParse(val);
       if (parsed == null) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('Invalid number for "${_formatLabel(entry.key)}"')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Invalid number for "${_formatLabel(entry.key)}"'),
+          ),
+        );
         return;
       }
       updates[entry.key] = parsed;
@@ -53,13 +64,13 @@ class _UpdateServicesTabState extends State<UpdateServicesTab> {
 
     try {
       await _firestore.collection('services').doc(category).update(updates);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('$category services updated successfully'),
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$category services updated successfully')),
+      );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Failed to update $category services'),
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to update $category services')),
+      );
     }
   }
 
@@ -91,43 +102,54 @@ class _UpdateServicesTabState extends State<UpdateServicesTab> {
   }
 
   Widget _buildServiceSection(
-      String title, Map<String, TextEditingController> controllers, String type) {
+    String title,
+    Map<String, TextEditingController> controllers,
+    String type,
+  ) {
     return Card(
+      color: const Color(0xFF40025B),
       elevation: 3,
       margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('$title Services',
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 12),
-          ...controllers.entries.map((entry) {
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: TextField(
-                controller: entry.value,
-                decoration: InputDecoration(
-                  labelText: _formatLabel(entry.key),
-                  prefixText: '₱ ',
-                  border: const OutlineInputBorder(),
-                ),
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              ),
-            );
-          }).toList(),
-          const SizedBox(height: 12),
-          Align(
-            alignment: Alignment.centerRight,
-            child: ElevatedButton(
-              onPressed: () => updateServices(type, controllers),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF4B007D),
-              ),
-              child: const Text('Save Changes'),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '$title Services',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-          )
-        ]),
+            const SizedBox(height: 12),
+            ...controllers.entries.map((entry) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: TextField(
+                  controller: entry.value,
+                  decoration: InputDecoration(
+                    labelText: _formatLabel(entry.key),
+                    prefixText: '₱ ',
+                    border: const OutlineInputBorder(),
+                  ),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                ),
+              );
+            }).toList(),
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerRight,
+              child: ElevatedButton(
+                onPressed: () => updateServices(type, controllers),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF4B007D),
+                ),
+                child: const Text('Save Changes'),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -145,12 +167,40 @@ class _UpdateServicesTabState extends State<UpdateServicesTab> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    return ListView(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      children: [
-        _buildServiceSection('Laundry', _laundryControllers, 'laundry'),
-        _buildServiceSection('Water', _waterControllers, 'water'),
-      ],
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: PreferredSize(
+          preferredSize: Size.fromHeight(48), // 👈 Smaller than default (56)
+          child: AppBar(
+            backgroundColor: const Color(0xFF40025B),
+            automaticallyImplyLeading: false,
+            bottom: const TabBar(
+              labelColor: Colors.white,
+              unselectedLabelColor: Colors.white70,
+              tabs: [Tab(text: 'Laundry Service'), Tab(text: 'Water Service')],
+            ),
+          ),
+        ),
+
+        backgroundColor: Colors.white,
+        body: TabBarView(
+          children: [
+            ListView(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              children: [
+                _buildServiceSection('Laundry', _laundryControllers, 'laundry'),
+              ],
+            ),
+            ListView(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              children: [
+                _buildServiceSection('Water', _waterControllers, 'water'),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

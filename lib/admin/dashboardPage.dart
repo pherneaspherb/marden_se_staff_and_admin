@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'screens/OrderStatus/orderStatusTab.dart';
 import 'screens/OrderTracking/orderTrackingTab.dart';
@@ -73,14 +74,27 @@ class _DashboardPageState extends State<DashboardPage>
       appBar: AppBar(
         title: const Text("MARDEN HUB - Laundry Hub"),
         backgroundColor: const Color(0xFF40025B),
-        actions: const [
-          Icon(Icons.account_circle, color: Colors.white),
-          SizedBox(width: 16),
-          Icon(Icons.water_drop, color: Colors.white),
-          SizedBox(width: 16),
-          Icon(Icons.menu, color: Colors.white),
-          SizedBox(width: 16),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout, color: Colors.white),
+            tooltip: 'Logout',
+            onPressed: () async {
+              try {
+                await FirebaseAuth.instance.signOut();
+                Navigator.of(
+                  context,
+                ).pushNamedAndRemoveUntil('/', (route) => false);
+              } catch (e) {
+                print('Logout failed: $e');
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text('Logout failed: $e')));
+              }
+            },
+          ),
+          const SizedBox(width: 16),
         ],
+
         bottom: TabBar(
           controller: _tabController,
           isScrollable: true,
@@ -90,10 +104,7 @@ class _DashboardPageState extends State<DashboardPage>
           tabs: tabs,
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: tabViews,
-      ),
+      body: TabBarView(controller: _tabController, children: tabViews),
     );
   }
 }

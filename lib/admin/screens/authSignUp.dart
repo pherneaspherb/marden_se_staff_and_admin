@@ -25,6 +25,19 @@ class _AuthSignUpPageState extends State<AuthSignUpPage> {
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
 
+  @override
+  void initState() {
+    super.initState();
+
+    // Immediately redirect if role is staff
+    if (widget.role == 'staff') {
+      // Delay navigation to avoid setState during build
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.pushReplacementNamed(context, '/staff-login');
+      });
+    }
+  }
+
   Future<void> _signUp() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -149,6 +162,15 @@ class _AuthSignUpPageState extends State<AuthSignUpPage> {
 
   @override
   Widget build(BuildContext context) {
+    // If role is staff, we already redirect in initState
+    // So just render empty container to avoid build issues
+    if (widget.role == 'staff') {
+      return const Scaffold(
+        backgroundColor: Color(0xFF40025B),
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     String roleCapitalized = widget.role[0].toUpperCase() + widget.role.substring(1);
 
     return Scaffold(
@@ -206,7 +228,7 @@ class _AuthSignUpPageState extends State<AuthSignUpPage> {
                           onPressed: _signUp,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.white,
-                            foregroundColor: Color(0xFF40025B),
+                            foregroundColor: const Color(0xFF40025B),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(30),
                             ),

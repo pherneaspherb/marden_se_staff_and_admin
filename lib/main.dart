@@ -59,10 +59,6 @@ class MyApp extends StatelessWidget {
             return MaterialPageRoute(
               builder: (_) => AuthSignUpPage(role: 'admin'),
             );
-          case '/staff-signup':
-            return MaterialPageRoute(
-              builder: (_) => AuthSignUpPage(role: 'staff'),
-            );
           case '/admin-dashboard':
             return MaterialPageRoute(
               builder: (_) => const DashboardPage(role: 'admin'),

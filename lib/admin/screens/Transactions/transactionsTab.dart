@@ -322,52 +322,114 @@ class ReceiptView extends StatelessWidget {
     final serviceType =
         orderData['serviceType'] ?? orderData['containerType'] ?? 'N/A';
 
+    final addressMap = orderData['address'] as Map<String, dynamic>?;
+    final defaultAddress =
+        customerData['defaultAddress'] as Map<String, dynamic>?;
+
+    final formattedAddress =
+        (addressMap != null && addressMap.isNotEmpty)
+            ? "${addressMap['house'] ?? ''}, ${addressMap['barangay'] ?? ''}, ${addressMap['municipality'] ?? ''}, ${addressMap['city'] ?? ''}"
+            : defaultAddress != null
+            ? "${defaultAddress['street'] ?? ''}, ${defaultAddress['barangay'] ?? ''}, ${defaultAddress['municipality'] ?? ''}, ${defaultAddress['city'] ?? ''}"
+            : "No address provided";
+
     return Scaffold(
+      backgroundColor: Colors.white, // <-- set background to white
       appBar: AppBar(
-        title: Text('Receipt for $orderId'),
+        title: Text('Receipt - Order $orderId'),
         backgroundColor: const Color(0xFF40025B),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Customer: ${customerData['firstName']} ${customerData['lastName']}',
-              style: const TextStyle(fontSize: 18),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Card(
+          color: const Color(0xFF40025B),
+          elevation: 4,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Receipt Details',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _buildInfoRow('Order ID', orderId),
+                const Divider(),
+                _buildInfoRow(
+                  'Customer',
+                  '${customerData['firstName'] ?? '-'} '
+                      '${customerData['lastName'] ?? '-'}',
+                ),
+                const SizedBox(height: 8),
+                _buildInfoRow('Address', formattedAddress),
+                const Divider(),
+                _buildInfoRow('Service Type', serviceType),
+                const Divider(),
+                _buildInfoRow(
+                  'Total Amount',
+                  '₱$total',
+                  valueStyle: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Center(
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    icon: const Icon(Icons.close),
+                    label: const Text('Close'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 32,
+                        vertical: 12,
+                      ),
+                      textStyle: const TextStyle(fontSize: 16),
+                    ),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 8),
-            Text('Service: $serviceType', style: const TextStyle(fontSize: 16)),
-            const SizedBox(height: 8),
-            Text('Total Amount: ₱$total', style: const TextStyle(fontSize: 16)),
-            const SizedBox(height: 8),
-            Text('Order ID: $orderId', style: const TextStyle(fontSize: 16)),
-            // Add more receipt info here if needed
-          ],
+          ),
         ),
       ),
     );
   }
-}
 
-/// Top-level function to generate and download PDF receipt
-Future<void> _generateAndDownloadPdf(
-  Map<String, dynamic> orderData,
-  Map<String, dynamic> customerData,
-  BuildContext context,
-) async {
-  try {
-    // TODO: Replace with actual PDF generation and download logic
-    // For example, call a function from your downloadReceipt.dart
-    // await generatePdfAndDownload(orderData, customerData);
-
-    // For now, show a SnackBar as placeholder
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('PDF generated and downloaded!')),
+  Widget _buildInfoRow(String label, String value, {TextStyle? valueStyle}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            flex: 3,
+            child: Text(
+              '$label:',
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+            ),
+          ),
+          Expanded(
+            flex: 5,
+            child: Text(
+              value,
+              style: valueStyle ?? const TextStyle(fontSize: 16),
+            ),
+          ),
+        ],
+      ),
     );
-  } catch (e) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text('Failed to generate PDF: $e')));
   }
 }

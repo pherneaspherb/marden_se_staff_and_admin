@@ -197,7 +197,7 @@ class _WaterOrderStatusTabState extends State<WaterOrderStatusTab> {
   Widget _buildSubTabSelector() {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12),
-      color: const Color(0xFF40025B),
+      color: Colors.white,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: OrderSubTab.values.map((tab) {
@@ -209,7 +209,7 @@ class _WaterOrderStatusTabState extends State<WaterOrderStatusTab> {
             child: OutlinedButton(
               onPressed: () => setState(() => _selectedSubTab = tab),
               style: OutlinedButton.styleFrom(
-                backgroundColor: isSelected ? const Color(0xFF6A2F90) : Colors.transparent,
+                backgroundColor: isSelected ? const Color(0xFF40025B) : Colors.transparent,
                 foregroundColor: isSelected ? Colors.white : Colors.deepPurple,
                 side: const BorderSide(color: Colors.deepPurple),
                 shape: RoundedRectangleBorder(
