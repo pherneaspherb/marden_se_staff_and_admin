@@ -121,7 +121,10 @@ class _UpdateServicesTabState extends State<UpdateServicesTab> {
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
-            ...controllers.entries.map((entry) {
+            // Filter out 'pickup' entries here:
+            ...controllers.entries.where((entry) => entry.key != 'pickup').map((
+              entry,
+            ) {
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 child: TextField(
@@ -142,9 +145,7 @@ class _UpdateServicesTabState extends State<UpdateServicesTab> {
               alignment: Alignment.centerRight,
               child: ElevatedButton(
                 onPressed: () => updateServices(type, controllers),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF4B007D),
-                ),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.white),
                 child: const Text('Save Changes'),
               ),
             ),

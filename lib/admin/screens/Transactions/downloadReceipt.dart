@@ -3,26 +3,22 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:flutter/material.dart';
-// Web-only import
 import 'dart:html' as html;
 
-/// Deep Purple Material Color (Hex #673AB7)
 final deepPurple = const PdfColor.fromInt(0xFF673AB7);
 
-/// Generates the styled PDF bytes
 Future<Uint8List> _generatePdfBytes(
   Map<String, dynamic> orderData,
   Map<String, dynamic> customerData,
+  bool isLaundry,
 ) async {
   final pdf = pw.Document();
 
   final orderId = orderData['orderId'] ?? 'No ID';
   final totalRaw = orderData['totalAmount'] ?? orderData['totalPrice'] ?? '0.00';
   final double total = double.tryParse(totalRaw.toString()) ?? 0.00;
-  final serviceType = orderData['serviceType'] ?? orderData['containerType'] ?? 'N/A';
 
-  final customerName = '${customerData['firstName']} ${customerData['lastName']}';
+  final customerName = '${customerData['firstName'] ?? ''} ${customerData['lastName'] ?? ''}';
 
   pdf.addPage(
     pw.Page(
@@ -50,13 +46,28 @@ Future<Uint8List> _generatePdfBytes(
             pw.Divider(thickness: 1.5, color: deepPurple),
             pw.SizedBox(height: 12),
 
+            // Common fields
             _buildRow('Order ID:', orderId),
             _buildRow('Customer:', customerName),
-            _buildRow('Service Type:', serviceType),
-            _buildRow('Total Amount:', 'PHP ${total.toStringAsFixed(2)}'),
+
+            if (isLaundry) ...[
+              _buildRow('Service Type:', orderData['serviceType']?.toString() ?? 'N/A'),
+              _buildRow('Extras:', orderData['extras']?.toString() ?? 'None'),
+              _buildRow('Weight:', orderData['weight']?.toString() ?? 'N/A'),
+              _buildRow('Delivery Mode:', orderData['deliveryMode']?.toString() ?? 'N/A'),
+            ] else ...[
+              // Water receipt fields
+              _buildRow('Container Type:', orderData['containerType']?.toString() ?? 'N/A'),
+              _buildRow('Quantity:', orderData['quantity']?.toString() ?? 'N/A'),
+              _buildRow('Delivery Mode:', orderData['deliveryMode']?.toString() ?? 'N/A'),
+            ],
 
             pw.SizedBox(height: 20),
             pw.Divider(thickness: 1.2),
+
+            // Total last
+            _buildRow('Total Amount:', 'PHP ${total.toStringAsFixed(2)}'),
+
             pw.SizedBox(height: 10),
             pw.Center(
               child: pw.Text(
@@ -77,7 +88,6 @@ Future<Uint8List> _generatePdfBytes(
   return pdf.save();
 }
 
-/// Reusable styled row
 pw.Widget _buildRow(String label, String value) {
   return pw.Padding(
     padding: const pw.EdgeInsets.symmetric(vertical: 4),
@@ -100,12 +110,12 @@ pw.Widget _buildRow(String label, String value) {
   );
 }
 
-/// Public function to generate and download PDF depending on platform
 Future<void> generateAndDownloadPdf(
   Map<String, dynamic> orderData,
   Map<String, dynamic> customerData,
+  bool isLaundry,
 ) async {
-  final pdfBytes = await _generatePdfBytes(orderData, customerData);
+  final pdfBytes = await _generatePdfBytes(orderData, customerData, isLaundry);
 
   if (kIsWeb) {
     final blob = html.Blob([pdfBytes], 'application/pdf');

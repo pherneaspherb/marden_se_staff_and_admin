@@ -53,11 +53,13 @@ class _TransactionsTabState extends State<TransactionsTab>
                   orderType: 'laundryOrders',
                   totalKey: 'totalAmount',
                   serviceKey: 'serviceType',
+                  isLaundry: true,
                 ),
                 TransactionListView(
                   orderType: 'waterOrders',
                   totalKey: 'totalPrice',
                   serviceKey: 'containerType',
+                  isLaundry: false,
                 ),
               ],
             ),
@@ -72,11 +74,13 @@ class TransactionListView extends StatelessWidget {
   final String orderType;
   final String totalKey;
   final String serviceKey;
+  final bool isLaundry;
 
   const TransactionListView({
     required this.orderType,
     required this.totalKey,
     required this.serviceKey,
+    required this.isLaundry,
     super.key,
   });
 
@@ -104,7 +108,6 @@ class TransactionListView extends StatelessWidget {
 
                 final defaultAddress =
                     customerData['defaultAddress'] as Map<String, dynamic>?;
-
                 final customerId = customerDoc.id;
 
                 return [
@@ -247,6 +250,7 @@ class TransactionListView extends StatelessWidget {
                                                       await generateAndDownloadPdf(
                                                         orderData,
                                                         customerData,
+                                                        isLaundry,
                                                       );
                                                       ScaffoldMessenger.of(
                                                         context,
@@ -269,7 +273,6 @@ class TransactionListView extends StatelessWidget {
                                                       );
                                                     }
                                                   },
-
                                                   style:
                                                       OutlinedButton.styleFrom(
                                                         foregroundColor:
@@ -319,8 +322,14 @@ class ReceiptView extends StatelessWidget {
     final totalValue =
         (orderData['totalAmount'] ?? orderData['totalPrice']) as num? ?? 0.0;
     final total = totalValue.toStringAsFixed(2);
+
+    // Detect if laundry or water based on presence of keys
+    final isLaundry = orderData.containsKey('serviceType');
+
     final serviceType =
-        orderData['serviceType'] ?? orderData['containerType'] ?? 'N/A';
+        isLaundry
+            ? (orderData['serviceType'] ?? 'N/A')
+            : (orderData['containerType'] ?? 'N/A');
 
     final addressMap = orderData['address'] as Map<String, dynamic>?;
     final defaultAddress =
@@ -334,7 +343,7 @@ class ReceiptView extends StatelessWidget {
             : "No address provided";
 
     return Scaffold(
-      backgroundColor: Colors.white, // <-- set background to white
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: Text('Receipt - Order $orderId'),
         backgroundColor: const Color(0xFF40025B),
@@ -352,7 +361,7 @@ class ReceiptView extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                const Text(
                   'Receipt Details',
                   style: TextStyle(
                     fontSize: 24,
@@ -365,13 +374,46 @@ class ReceiptView extends StatelessWidget {
                 const Divider(),
                 _buildInfoRow(
                   'Customer',
-                  '${customerData['firstName'] ?? '-'} '
-                      '${customerData['lastName'] ?? '-'}',
+                  '${customerData['firstName'] ?? '-'} ${customerData['lastName'] ?? '-'}',
                 ),
                 const SizedBox(height: 8),
                 _buildInfoRow('Address', formattedAddress),
                 const Divider(),
-                _buildInfoRow('Service Type', serviceType),
+                // Show laundry or water specific fields here
+                if (isLaundry) ...[
+                  _buildInfoRow(
+                    'Service Type',
+                    orderData['serviceType'] ?? 'N/A',
+                  ),
+                  _buildInfoRow(
+                    'Extras',
+                    orderData['extras'] is List
+                        ? (orderData['extras'] as List).join(', ')
+                        : (orderData['extras']?.toString() ?? 'None'),
+                  ),
+
+                  _buildInfoRow(
+                    'Weight',
+                    orderData['weight']?.toString() ?? 'N/A',
+                  ),
+                  _buildInfoRow(
+                    'Delivery Mode',
+                    orderData['deliveryMode'] ?? 'N/A',
+                  ),
+                ] else ...[
+                  _buildInfoRow(
+                    'Container Type',
+                    orderData['containerType'] ?? 'N/A',
+                  ),
+                  _buildInfoRow(
+                    'Quantity',
+                    orderData['quantity']?.toString() ?? 'N/A',
+                  ),
+                  _buildInfoRow(
+                    'Delivery Mode',
+                    orderData['deliveryMode'] ?? 'N/A',
+                  ),
+                ],
                 const Divider(),
                 _buildInfoRow(
                   'Total Amount',
