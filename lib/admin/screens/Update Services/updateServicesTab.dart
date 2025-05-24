@@ -13,6 +13,25 @@ class _UpdateServicesTabState extends State<UpdateServicesTab> {
   Map<String, TextEditingController> _waterControllers = {};
   bool _loading = true;
 
+  // Ordered keys to display in correct order
+  final List<String> laundryKeys = [
+    'wash_and_dry',
+    'wash_only',
+    'dry_only',
+    'fabric_softener',
+    'fold',
+    'per_kilogram',
+    'pickup',
+    'deliver',
+  ];
+
+  final List<String> waterKeys = [
+    'tube_container',
+    'jug_container',
+    'pickup',
+    'deliver',
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -76,28 +95,31 @@ class _UpdateServicesTabState extends State<UpdateServicesTab> {
 
   String _formatLabel(String key) {
     switch (key) {
-      case 'washAndDry':
+      case 'wash_and_dry':
         return 'Wash & Dry';
-      case 'washOnly':
+      case 'wash_only':
         return 'Wash Only';
-      case 'dryOnly':
+      case 'dry_only':
         return 'Dry Only';
-      case 'fabricSoftener':
+      case 'fabric_softener':
         return 'Fabric Softener';
       case 'fold':
         return 'Fold';
-      case 'perKilogram':
+      case 'per_kilogram':
         return 'Per Kilogram';
       case 'pickup':
         return 'Pick Up';
-      case 'deliveryFee':
+      case 'deliver':
         return 'Delivery Fee';
-      case 'tubContainer':
+      case 'tube_container':
         return 'Tube Container';
-      case 'jugContainer':
+      case 'jug_container':
         return 'Jug Container';
       default:
-        return key.replaceAll("_", " ");
+        return key.replaceAll("_", " ").replaceAllMapped(
+          RegExp(r'(^|_)([a-z])'),
+          (match) => ' ${match[2]!.toUpperCase()}',
+        ).trim();
     }
   }
 
@@ -106,6 +128,8 @@ class _UpdateServicesTabState extends State<UpdateServicesTab> {
     Map<String, TextEditingController> controllers,
     String type,
   ) {
+    final keyOrder = type == 'laundry' ? laundryKeys : waterKeys;
+
     return Card(
       color: const Color(0xFF40025B),
       elevation: 3,
@@ -121,22 +145,20 @@ class _UpdateServicesTabState extends State<UpdateServicesTab> {
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
-            // Filter out 'pickup' entries here:
-            ...controllers.entries.where((entry) => entry.key != 'pickup').map((
-              entry,
-            ) {
+            ...keyOrder.where((key) => key != 'pickup').map((key) {
+              final controller = controllers[key];
+              if (controller == null) return SizedBox.shrink();
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 child: TextField(
-                  controller: entry.value,
+                  controller: controller,
                   decoration: InputDecoration(
-                    labelText: _formatLabel(entry.key),
+                    labelText: _formatLabel(key),
                     prefixText: '₱ ',
                     border: const OutlineInputBorder(),
                   ),
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
                 ),
               );
             }).toList(),
@@ -145,7 +167,8 @@ class _UpdateServicesTabState extends State<UpdateServicesTab> {
               alignment: Alignment.centerRight,
               child: ElevatedButton(
                 onPressed: () => updateServices(type, controllers),
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.white),
+                style:
+                    ElevatedButton.styleFrom(backgroundColor: Colors.white),
                 child: const Text('Save Changes'),
               ),
             ),
@@ -172,7 +195,7 @@ class _UpdateServicesTabState extends State<UpdateServicesTab> {
       length: 2,
       child: Scaffold(
         appBar: PreferredSize(
-          preferredSize: Size.fromHeight(48), // 👈 Smaller than default (56)
+          preferredSize: Size.fromHeight(48),
           child: AppBar(
             backgroundColor: const Color(0xFF40025B),
             automaticallyImplyLeading: false,
@@ -183,7 +206,6 @@ class _UpdateServicesTabState extends State<UpdateServicesTab> {
             ),
           ),
         ),
-
         backgroundColor: Colors.white,
         body: TabBarView(
           children: [
