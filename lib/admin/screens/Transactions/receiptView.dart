@@ -24,7 +24,6 @@ class _ReceiptViewState extends State<ReceiptView> {
     super.initState();
     isLaundry = widget.orderData.containsKey('serviceType');
 
-    // Fetch prices from Firestore based on order type
     FirebaseFirestore.instance
         .collection('services')
         .doc(isLaundry ? 'laundry' : 'water')
@@ -54,7 +53,6 @@ class _ReceiptViewState extends State<ReceiptView> {
     final basePrice = prices[baseKey] ?? 0;
     final perKgPrice = prices['per_kilogram'] ?? 0;
 
-    // Sum extras prices
     num extrasPrice = 0;
     for (var extra in extras) {
       final key = _normalizeKey(extra);
@@ -67,32 +65,83 @@ class _ReceiptViewState extends State<ReceiptView> {
     final total =
         basePrice + (perKgPrice * weight) + extrasPrice + deliveryPrice;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('Service Type: $serviceType - ₱${basePrice.toStringAsFixed(2)}'),
-        Text(
-          'Weight: $weight kg x ₱${perKgPrice.toStringAsFixed(2)} = ₱${(perKgPrice * weight).toStringAsFixed(2)}',
+    return Card(
+      color: const Color(0xFF40025B),
+      margin: const EdgeInsets.symmetric(vertical: 12),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 4,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: DefaultTextStyle(
+          style: const TextStyle(color: Colors.white),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: const [
+                  Icon(Icons.local_laundry_service, color: Colors.white),
+                  SizedBox(width: 8),
+                  Text(
+                    'Laundry Breakdown',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+              const Divider(height: 24, thickness: 1, color: Colors.white54),
+              Text(
+                'Service Type: $serviceType - ₱${basePrice.toStringAsFixed(2)}',
+              ),
+              Text(
+                'Weight: $weight kg x ₱${perKgPrice.toStringAsFixed(2)} = ₱${(perKgPrice * weight).toStringAsFixed(2)}',
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Extras:',
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
+              if (extras.isNotEmpty)
+                ...extras.map((extra) {
+                  final price = prices[_normalizeKey(extra)] ?? 0;
+                  return Padding(
+                    padding: const EdgeInsets.only(left: 12, top: 4),
+                    child: Text('• $extra: ₱${price.toStringAsFixed(2)}'),
+                  );
+                })
+              else
+                const Padding(
+                  padding: EdgeInsets.only(left: 12, top: 4),
+                  child: Text('None'),
+                ),
+              const SizedBox(height: 8),
+              Text(
+                'Delivery Mode: $deliveryMode - ₱${deliveryPrice.toStringAsFixed(2)}',
+              ),
+              const SizedBox(height: 20),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF40025B),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  'Total: ₱${total.toStringAsFixed(2)}',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 20,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-        if (extras.isNotEmpty) ...[
-          const SizedBox(height: 4),
-          const Text('Extras:'),
-          ...extras.map((extra) {
-            final price = prices[_normalizeKey(extra)] ?? 0;
-            return Text(' - $extra: ₱${price.toStringAsFixed(2)}');
-          }),
-        ] else
-          const Text('Extras: None'),
-        const SizedBox(height: 4),
-        Text(
-          'Delivery Mode: $deliveryMode - ₱${deliveryPrice.toStringAsFixed(2)}',
-        ),
-        const Divider(),
-        Text(
-          'Total: ₱${total.toStringAsFixed(2)}',
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-      ],
+      ),
     );
   }
 
@@ -106,7 +155,6 @@ class _ReceiptViewState extends State<ReceiptView> {
     final containerKey = "${_normalizeKey(containerType)}_container";
     final containerPrice = prices[containerKey] ?? 0;
 
-    // Optional: Debug print if key is missing
     if (!prices.containsKey(containerKey)) {
       debugPrint('⚠️ Missing container price for "$containerKey"');
     }
@@ -116,25 +164,65 @@ class _ReceiptViewState extends State<ReceiptView> {
 
     final total = (containerPrice * quantity) + deliveryPrice;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Container Type: $containerType - ₱${containerPrice.toStringAsFixed(2)}',
+    return Card(
+      color: const Color(0xFF40025B),
+      margin: const EdgeInsets.symmetric(vertical: 12),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 4,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: DefaultTextStyle(
+          style: const TextStyle(color: Colors.white),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: const [
+                  Icon(Icons.water_drop, color: Colors.white),
+                  SizedBox(width: 8),
+                  Text(
+                    'Water Breakdown',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+              const Divider(height: 24, thickness: 1, color: Colors.white54),
+              Text(
+                'Container Type: $containerType - ₱${containerPrice.toStringAsFixed(2)}',
+              ),
+              Text(
+                'Quantity: $quantity x ₱${containerPrice.toStringAsFixed(2)} = ₱${(containerPrice * quantity).toStringAsFixed(2)}',
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Delivery Mode: $deliveryMode - ₱${deliveryPrice.toStringAsFixed(2)}',
+              ),
+              const SizedBox(height: 20),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF40025B),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  'Total: ₱${total.toStringAsFixed(2)}',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 20,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-        Text(
-          'Quantity: $quantity x ₱${containerPrice.toStringAsFixed(2)} = ₱${(containerPrice * quantity).toStringAsFixed(2)}',
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'Delivery Mode: $deliveryMode - ₱${deliveryPrice.toStringAsFixed(2)}',
-        ),
-        const Divider(),
-        Text(
-          'Total: ₱${total.toStringAsFixed(2)}',
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-      ],
+      ),
     );
   }
 
@@ -144,7 +232,6 @@ class _ReceiptViewState extends State<ReceiptView> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    // Determine address to show: order address overrides customer default
     final orderAddress = widget.orderData['address'] as Map<String, dynamic>?;
     final customerDefaultAddress =
         widget.customerData['defaultAddress'] as Map<String, dynamic>?;
@@ -160,31 +247,78 @@ class _ReceiptViewState extends State<ReceiptView> {
     }
 
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text('Receipt Details'),
         backgroundColor: const Color(0xFF40025B),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16),
         child: ListView(
           children: [
             Text(
               "Order ID: ${widget.orderData['orderId'] ?? 'No ID'}",
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+                color: const Color(0xFF40025B),
+              ),
             ),
-            const SizedBox(height: 12),
-            Text(
-              "Customer: ${widget.customerData['lastName'] ?? ''}, ${widget.customerData['firstName'] ?? ''}",
-              style: const TextStyle(fontSize: 16),
+            const SizedBox(height: 16),
+            Card(
+              color: const Color(0xFF40025B),
+              margin: const EdgeInsets.only(bottom: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              elevation: 4,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
+                child: DefaultTextStyle(
+                  style: const TextStyle(color: Colors.white),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: const [
+                          Icon(Icons.person, color: Colors.white),
+                          SizedBox(width: 8),
+                          Text(
+                            'Customer Info',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const Divider(
+                        height: 24,
+                        thickness: 1,
+                        color: Colors.white54,
+                      ),
+                      Text(
+                        "${widget.customerData['lastName'] ?? ''}, ${widget.customerData['firstName'] ?? ''}",
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        formattedAddress(),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontStyle: FontStyle.italic,
+                          color: Colors.white70,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
-            const SizedBox(height: 12),
-            Text(
-              "Address: ${formattedAddress()}",
-              style: const TextStyle(fontSize: 14, fontStyle: FontStyle.italic),
-            ),
-            const SizedBox(height: 20),
-
-            // Show breakdown according to order type
             if (isLaundry) _buildLaundryBreakdown() else _buildWaterBreakdown(),
           ],
         ),
