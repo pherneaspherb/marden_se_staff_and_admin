@@ -8,7 +8,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 final deepPurple = const PdfColor.fromInt(0xFF673AB7);
 
-/// Pricing model to hold prices fetched from Firestore
+/// Pricing model
 class Pricing {
   final Map<String, double> laundryPrices;
   final Map<String, double> extrasPrices;
@@ -27,40 +27,65 @@ Future<Pricing> fetchPricing() async {
 
   final laundryDoc =
       await firestore.collection('services').doc('laundry').get();
-  final extrasDoc = await firestore.collection('services').doc('extras').get();
   final waterDoc = await firestore.collection('services').doc('water').get();
 
   Map<String, double> toPriceMap(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>? ?? {};
     return data.map((key, value) {
-      final val = value;
-      if (val == null) return MapEntry(key, 0.0);
-      if (val is num) return MapEntry(key, val.toDouble());
+      if (value == null) return MapEntry(key, 0.0);
+      if (value is num) return MapEntry(key, value.toDouble());
       return MapEntry(key, 0.0);
     });
   }
 
+  final laundryData = toPriceMap(laundryDoc);
+
   return Pricing(
-    laundryPrices: toPriceMap(laundryDoc),
-    extrasPrices: toPriceMap(extrasDoc),
+    laundryPrices: laundryData,
+    extrasPrices: laundryData,
     waterPrices: toPriceMap(waterDoc),
   );
 }
 
-/// Helper to safely get price from a map by key, returns 0.0 if key is null or missing
-double _getPriceFromMap(Map<String, double> priceMap, String? key) {
-  if (key == null) {
-    // print('Price key is null');
-    return 0.0;
-  }
-  final price = priceMap[key];
-  if (price == null) {
-    // print('Price missing for key: $key');
-    return 0.0;
-  }
-  return price;
+/// Manual key alias map
+final keyAliases = {
+  'wash_dry': 'wash_and_dry',
+  'pick_up': 'pickup',
+  'tube': 'tube_container',
+  'jug': 'jug_container',
+  'per_kg': 'per_kilogram',
+};
+
+/// Normalize and alias key strings
+String _normalizeKey(String key) {
+  var cleaned = key.toLowerCase();
+
+  // Replace & with 'and'
+  cleaned = cleaned.replaceAll('&', 'and');
+
+  // Remove other punctuation except whitespace
+  cleaned = cleaned.replaceAll(RegExp(r'[^\w\s]+'), '');
+
+  // Replace multiple spaces with a single space
+  cleaned = cleaned.replaceAll(RegExp(r'\s+'), ' ');
+
+  // Replace spaces with underscores
+  cleaned = cleaned.replaceAll(' ', '_');
+
+  cleaned = cleaned.trim();
+
+  // Check aliases
+  return keyAliases[cleaned] ?? cleaned;
 }
 
+/// Get price safely
+double _getPriceFromMap(Map<String, double> priceMap, String? key) {
+  if (key == null) return 0.0;
+  final normalizedKey = _normalizeKey(key);
+  return priceMap[normalizedKey] ?? 0.0;
+}
+
+/// PDF generation
 Future<Uint8List> _generatePdfBytes(
   Map<String, dynamic> orderData,
   Map<String, dynamic> customerData,
@@ -70,13 +95,123 @@ Future<Uint8List> _generatePdfBytes(
   final pdf = pw.Document();
 
   final orderId = orderData['orderId'] ?? 'No ID';
-  final totalRaw =
-      orderData['totalAmount'] ?? orderData['totalPrice'] ?? '0.00';
-  final double total = double.tryParse(totalRaw.toString()) ?? 0.00;
-
   final customerName =
       '${customerData['firstName'] ?? ''} ${customerData['lastName'] ?? ''}'
           .trim();
+
+  double total = 0.0;
+
+  final content = <pw.Widget>[
+    pw.Center(
+      child: pw.Text(
+        'Marden Services Receipt',
+        style: pw.TextStyle(
+          fontSize: 26,
+          fontWeight: pw.FontWeight.bold,
+          color: deepPurple,
+        ),
+      ),
+    ),
+    pw.SizedBox(height: 20),
+    pw.Divider(thickness: 1.5, color: deepPurple),
+    pw.SizedBox(height: 12),
+    _buildRow('Order ID:', orderId),
+    _buildRow('Customer:', customerName),
+    pw.SizedBox(height: 20),
+  ];
+
+  if (isLaundry) {
+    final serviceType = orderData['serviceType']?.toString() ?? 'N/A';
+    final servicePrice = _getPriceFromMap(pricing.laundryPrices, serviceType);
+    print(
+      'ServiceType: "$serviceType" -> "${_normalizeKey(serviceType)}" -> PHP $servicePrice',
+    );
+    total += servicePrice;
+    content.add(_buildPriceRow('Service Type:', serviceType, servicePrice));
+
+    final extras = orderData['extras']?.toString();
+    double extrasTotal = 0.0;
+    if (extras != null &&
+        extras.toLowerCase() != 'none' &&
+        extras.trim().isNotEmpty) {
+      final extrasList = extras
+          .split(',')
+          .map((e) => e.trim())
+          .where((e) => e.isNotEmpty);
+
+      for (final e in extrasList) {
+        final normalized = _normalizeKey(e);
+        final price = _getPriceFromMap(pricing.extrasPrices, e);
+        print('Extra: "$e" -> "$normalized" -> PHP $price');
+        extrasTotal += price;
+      }
+
+      total += extrasTotal;
+      content.add(_buildPriceRow('Extras:', extras, extrasTotal));
+    }
+
+    final weight =
+        double.tryParse(orderData['weight']?.toString() ?? '0') ?? 0.0;
+    final ratePerKg = _getPriceFromMap(pricing.laundryPrices, 'per_kilogram');
+    final weightCost = weight * ratePerKg;
+    print(
+      'Weight: ${weight.toStringAsFixed(1)} kg * PHP $ratePerKg = PHP $weightCost',
+    );
+    total += weightCost;
+    content.add(
+      _buildPriceRow('Weight:', '${weight.toStringAsFixed(1)} kg', weightCost),
+    );
+
+    final deliveryMode = orderData['deliveryMode']?.toString() ?? 'N/A';
+    final deliveryFee =
+        deliveryMode.toLowerCase() == 'deliver'
+            ? _getPriceFromMap(pricing.laundryPrices, 'deliver')
+            : 0.0;
+    print('Delivery Mode: "$deliveryMode" -> PHP $deliveryFee');
+    total += deliveryFee;
+    content.add(_buildPriceRow('Delivery Mode:', deliveryMode, deliveryFee));
+  } else {
+    final containerType = orderData['containerType']?.toString() ?? 'N/A';
+    final containerPrice = _getPriceFromMap(pricing.waterPrices, containerType);
+    final quantity =
+        int.tryParse(orderData['quantity']?.toString() ?? '0') ?? 0;
+    final deliveryMode = orderData['deliveryMode']?.toString() ?? 'N/A';
+
+    final subtotal = containerPrice * quantity;
+    final deliveryFee =
+        deliveryMode.toLowerCase() == 'deliver'
+            ? _getPriceFromMap(pricing.waterPrices, 'deliver')
+            : 0.0;
+    total = subtotal + deliveryFee;
+
+    print(
+      'Container: "$containerType" -> PHP $containerPrice x $quantity = PHP $subtotal',
+    );
+    print('Delivery Mode: "$deliveryMode" -> PHP $deliveryFee');
+
+    content.addAll([
+      _buildPriceRow('Container Type:', containerType, containerPrice),
+      _buildRow('Quantity:', '$quantity'),
+      _buildPriceRow('Delivery Mode:', deliveryMode, deliveryFee),
+    ]);
+  }
+
+  content.addAll([
+    pw.SizedBox(height: 20),
+    pw.Divider(thickness: 1.2),
+    _buildRow('Total Amount:', 'PHP ${total.toStringAsFixed(2)}'),
+    pw.SizedBox(height: 10),
+    pw.Center(
+      child: pw.Text(
+        'Thank you for choosing Marden!',
+        style: pw.TextStyle(
+          fontSize: 14,
+          fontStyle: pw.FontStyle.italic,
+          color: PdfColors.grey600,
+        ),
+      ),
+    ),
+  ]);
 
   pdf.addPage(
     pw.Page(
@@ -90,87 +225,7 @@ Future<Uint8List> _generatePdfBytes(
             padding: const pw.EdgeInsets.all(24),
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
-              children: [
-                pw.Center(
-                  child: pw.Text(
-                    'Marden Services Receipt',
-                    style: pw.TextStyle(
-                      fontSize: 26,
-                      fontWeight: pw.FontWeight.bold,
-                      color: deepPurple,
-                    ),
-                  ),
-                ),
-                pw.SizedBox(height: 20),
-                pw.Divider(thickness: 1.5, color: deepPurple),
-                pw.SizedBox(height: 12),
-
-                // Common fields
-                _buildRow('Order ID:', orderId),
-                _buildRow('Customer:', customerName),
-
-                pw.SizedBox(height: 20),
-
-                // Service & pricing summary
-                if (isLaundry) ...[
-                  _buildPriceRow(
-                    'Service Type:',
-                    orderData['serviceType']?.toString() ?? 'N/A',
-                    _getPriceFromMap(
-                      pricing.laundryPrices,
-                      orderData['serviceType']?.toString(),
-                    ),
-                  ),
-                  if ((orderData['extras']?.toString().toLowerCase() ?? '') !=
-                          'none' &&
-                      orderData['extras'] != null)
-                    _buildPriceRow(
-                      'Extras:',
-                      orderData['extras']?.toString() ?? '',
-                      _getPriceFromMap(
-                        pricing.extrasPrices,
-                        orderData['extras']?.toString(),
-                      ),
-                    ),
-                  _buildRow('Weight:', '${orderData['weight'] ?? 'N/A'} kg'),
-                  _buildRow(
-                    'Delivery Mode:',
-                    orderData['deliveryMode']?.toString() ?? 'N/A',
-                  ),
-                ] else ...[
-                  _buildPriceRow(
-                    'Container Type:',
-                    orderData['containerType']?.toString() ?? 'N/A',
-                    _getPriceFromMap(
-                      pricing.waterPrices,
-                      orderData['containerType']?.toString(),
-                    ),
-                  ),
-                  _buildRow('Quantity:', '${orderData['quantity'] ?? 'N/A'}'),
-                  _buildRow(
-                    'Delivery Mode:',
-                    orderData['deliveryMode']?.toString() ?? 'N/A',
-                  ),
-                ],
-
-                pw.SizedBox(height: 20),
-                pw.Divider(thickness: 1.2),
-
-                // Total amount
-                _buildRow('Total Amount:', 'PHP ${total.toStringAsFixed(2)}'),
-
-                pw.SizedBox(height: 10),
-                pw.Center(
-                  child: pw.Text(
-                    'Thank you for choosing Marden!',
-                    style: pw.TextStyle(
-                      fontSize: 14,
-                      fontStyle: pw.FontStyle.italic,
-                      color: PdfColors.grey600,
-                    ),
-                  ),
-                ),
-              ],
+              children: content,
             ),
           ),
     ),
@@ -179,7 +234,6 @@ Future<Uint8List> _generatePdfBytes(
   return pdf.save();
 }
 
-/// Row for label + value (no price)
 pw.Widget _buildRow(String label, String value) {
   return pw.Padding(
     padding: const pw.EdgeInsets.symmetric(vertical: 4),
@@ -199,7 +253,6 @@ pw.Widget _buildRow(String label, String value) {
   );
 }
 
-/// Row for label + service name + price aligned right
 pw.Widget _buildPriceRow(String label, String serviceName, double price) {
   return pw.Padding(
     padding: const pw.EdgeInsets.symmetric(vertical: 4),
@@ -216,7 +269,7 @@ pw.Widget _buildPriceRow(String label, String serviceName, double price) {
         pw.Expanded(
           flex: 2,
           child: pw.Text(
-            '₱${price.toStringAsFixed(2)}',
+            'PHP ${price.toStringAsFixed(2)}',
             textAlign: pw.TextAlign.right,
           ),
         ),
@@ -225,14 +278,12 @@ pw.Widget _buildPriceRow(String label, String serviceName, double price) {
   );
 }
 
-/// Call this function to generate and download the PDF receipt for a single order.
 Future<void> generateAndDownloadPdf(
   Map<String, dynamic> orderData,
   Map<String, dynamic> customerData,
   bool isLaundry,
 ) async {
-  final pricing = await fetchPricing(); // fetch prices from Firestore
-
+  final pricing = await fetchPricing();
   final pdfBytes = await _generatePdfBytes(
     orderData,
     customerData,
