@@ -116,7 +116,6 @@ class TransactionListView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Stream of all customers
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
       stream: FirebaseFirestore.instance.collection('customers').snapshots(),
       builder: (context, customersSnapshot) {
@@ -147,11 +146,11 @@ class TransactionListView extends StatelessWidget {
                       .get(),
               builder: (context, ordersSnapshot) {
                 if (ordersSnapshot.connectionState == ConnectionState.waiting) {
-                  return const SizedBox.shrink(); // Can be loading indicator if you want
+                  return const SizedBox.shrink();
                 }
                 if (!ordersSnapshot.hasData ||
                     ordersSnapshot.data!.docs.isEmpty) {
-                  return const SizedBox.shrink(); // No orders for this customer and type
+                  return const SizedBox.shrink();
                 }
 
                 final orders = ordersSnapshot.data!.docs;
@@ -161,7 +160,6 @@ class TransactionListView extends StatelessWidget {
                       orders.map((orderDoc) {
                         final orderData = orderDoc.data();
 
-                        // Prepare address
                         final defaultAddress =
                             customerData['defaultAddress']
                                 as Map<String, dynamic>?;
@@ -175,13 +173,11 @@ class TransactionListView extends StatelessWidget {
                                 ? "${defaultAddress['street'] ?? ''}, ${defaultAddress['barangay'] ?? ''}, ${defaultAddress['municipality'] ?? ''}, ${defaultAddress['city'] ?? ''}"
                                 : "No address provided";
 
-                        // Parse price
                         final rawTotal = orderData[totalKey];
                         final totalPrice =
                             num.tryParse(rawTotal?.toString() ?? '') ?? 0;
                         final priceString = totalPrice.toStringAsFixed(2);
 
-                        // Breakdown string
                         final breakdown =
                             isLaundry
                                 ? _getLaundryBreakdown(orderData, priceMap)
@@ -374,27 +370,21 @@ class TransactionListView extends StatelessWidget {
     final containerType = order['containerType'] ?? 'Unknown';
     final deliveryMode = order['deliveryMode'] ?? '';
 
-    // Map container label to Firestore pricing key
     final containerKeyMap = {'Jug': 'jug_container', 'Tube': 'tube_container'};
 
-    // Safely get container price using the map
     final containerKey = containerKeyMap[containerType] ?? '';
     final containerPrice = prices[containerKey] ?? 0;
 
-    // Get container quantities
     final jugQty = num.tryParse(order['jug_container']?.toString() ?? '') ?? 0;
     final tubeQty =
         num.tryParse(order['tube_container']?.toString() ?? '') ?? 0;
 
-    // Individual container prices
     final jugPrice = (prices['jug_container'] ?? 0) as num;
     final tubePrice = (prices['tube_container'] ?? 0) as num;
 
-    // Delivery fee logic
     final deliveryFee =
         deliveryMode.toLowerCase() == 'deliver' ? (prices['deliver'] ?? 0) : 0;
 
-    // Construct readable breakdown
     String breakdown =
         "Container Type: $containerType (₱${(containerPrice as num).toStringAsFixed(2)})\n";
 

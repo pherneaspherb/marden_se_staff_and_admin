@@ -14,7 +14,6 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  // Check if admin is already signed in
   User? currentUser = FirebaseAuth.instance.currentUser;
   String initialRoute = currentUser != null ? '/admin-dashboard' : '/';
 

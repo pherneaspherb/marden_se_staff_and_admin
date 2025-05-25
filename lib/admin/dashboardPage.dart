@@ -8,7 +8,7 @@ import 'package:marden_se_staff_and_admin/admin/screens/Update Services/updateSe
 import 'package:marden_se_staff_and_admin/admin/screens/ManageAccount/manageAccountTab.dart';
 
 class DashboardPage extends StatefulWidget {
-  final String role; // 'admin' or 'staff'
+  final String role;
   const DashboardPage({Key? key, required this.role}) : super(key: key);
 
   @override

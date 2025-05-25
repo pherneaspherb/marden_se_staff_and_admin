@@ -11,27 +11,19 @@ class OrderStatusPage extends StatelessWidget {
       length: 2,
       child: Column(
         children: [
-          // Tab Bar without AppBar
           Container(
             color: const Color(0xFF40025B),
             child: const TabBar(
               indicatorColor: Colors.white,
               labelColor: Colors.white,
               unselectedLabelColor: Colors.white70,
-              tabs: [
-                Tab(text: 'Laundry Orders'),
-                Tab(text: 'Water Orders'),
-              ],
+              tabs: [Tab(text: 'Laundry Orders'), Tab(text: 'Water Orders')],
             ),
           ),
 
-          // Expanded TabBarView to fill remaining space
           const Expanded(
             child: TabBarView(
-              children: [
-                LaundryOrderStatusTab(),
-                WaterOrderStatusTab(),
-              ],
+              children: [LaundryOrderStatusTab(), WaterOrderStatusTab()],
             ),
           ),
         ],

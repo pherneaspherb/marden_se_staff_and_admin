@@ -13,7 +13,6 @@ class _UpdateServicesTabState extends State<UpdateServicesTab> {
   Map<String, TextEditingController> _waterControllers = {};
   bool _loading = true;
 
-  // Ordered keys to display in correct order
   final List<String> laundryKeys = [
     'wash_and_dry',
     'wash_only',
@@ -116,10 +115,13 @@ class _UpdateServicesTabState extends State<UpdateServicesTab> {
       case 'jug_container':
         return 'Jug Container';
       default:
-        return key.replaceAll("_", " ").replaceAllMapped(
-          RegExp(r'(^|_)([a-z])'),
-          (match) => ' ${match[2]!.toUpperCase()}',
-        ).trim();
+        return key
+            .replaceAll("_", " ")
+            .replaceAllMapped(
+              RegExp(r'(^|_)([a-z])'),
+              (match) => ' ${match[2]!.toUpperCase()}',
+            )
+            .trim();
     }
   }
 
@@ -157,8 +159,9 @@ class _UpdateServicesTabState extends State<UpdateServicesTab> {
                     prefixText: '₱ ',
                     border: const OutlineInputBorder(),
                   ),
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                 ),
               );
             }).toList(),
@@ -167,8 +170,7 @@ class _UpdateServicesTabState extends State<UpdateServicesTab> {
               alignment: Alignment.centerRight,
               child: ElevatedButton(
                 onPressed: () => updateServices(type, controllers),
-                style:
-                    ElevatedButton.styleFrom(backgroundColor: Colors.white),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.white),
                 child: const Text('Save Changes'),
               ),
             ),

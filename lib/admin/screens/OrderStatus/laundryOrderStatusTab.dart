@@ -19,7 +19,9 @@ class _LaundryOrderStatusTabState extends State<LaundryOrderStatusTab> {
       _firestore.collection('customers').snapshots();
 
   Stream<List<QueryDocumentSnapshot>> _getLaundryOrdersStream(
-      QuerySnapshot customerDocs, String status) {
+    QuerySnapshot customerDocs,
+    String status,
+  ) {
     final customerIds = customerDocs.docs.map((doc) => doc.id).toList();
     if (customerIds.isEmpty) return Stream.value([]);
 
@@ -122,9 +124,19 @@ class _LaundryOrderStatusTabState extends State<LaundryOrderStatusTab> {
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      _buildStatusButton(customerId, orderId, 'cancelled', 'Cancel'),
+                      _buildStatusButton(
+                        customerId,
+                        orderId,
+                        'cancelled',
+                        'Cancel',
+                      ),
                       const SizedBox(width: 8),
-                      _buildStatusButton(customerId, orderId, 'completed', 'Complete'),
+                      _buildStatusButton(
+                        customerId,
+                        orderId,
+                        'completed',
+                        'Complete',
+                      ),
                     ],
                   ),
               ],
@@ -162,7 +174,8 @@ class _LaundryOrderStatusTabState extends State<LaundryOrderStatusTab> {
             return ListView.builder(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               itemCount: orders.length,
-              itemBuilder: (context, index) => _buildOrderItem(context, orders[index]),
+              itemBuilder:
+                  (context, index) => _buildOrderItem(context, orders[index]),
             );
           },
         );
@@ -175,26 +188,32 @@ class _LaundryOrderStatusTabState extends State<LaundryOrderStatusTab> {
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
-        children: OrderSubTab.values.map((tab) {
-          final label = tab == OrderSubTab.pending ? "Pending" : "Completed";
-          final isSelected = _selectedSubTab == tab;
+        children:
+            OrderSubTab.values.map((tab) {
+              final label =
+                  tab == OrderSubTab.pending ? "Pending" : "Completed";
+              final isSelected = _selectedSubTab == tab;
 
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: OutlinedButton(
-              onPressed: () => setState(() => _selectedSubTab = tab),
-              style: OutlinedButton.styleFrom(
-                backgroundColor: isSelected ? const Color(0xFF40025B) : Colors.transparent,
-                foregroundColor: isSelected ? Colors.white : Colors.deepPurple,
-                side: const BorderSide(color: Colors.deepPurple),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: OutlinedButton(
+                  onPressed: () => setState(() => _selectedSubTab = tab),
+                  style: OutlinedButton.styleFrom(
+                    backgroundColor:
+                        isSelected
+                            ? const Color(0xFF40025B)
+                            : Colors.transparent,
+                    foregroundColor:
+                        isSelected ? Colors.white : Colors.deepPurple,
+                    side: const BorderSide(color: Colors.deepPurple),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
+                  child: Text(label),
                 ),
-              ),
-              child: Text(label),
-            ),
-          );
-        }).toList(),
+              );
+            }).toList(),
       ),
     );
   }

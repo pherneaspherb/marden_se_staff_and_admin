@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:async/async.dart'; // For StreamGroup.merge
+import 'package:async/async.dart';
 
 enum OrderSubTab { pending, completed }
 
@@ -81,7 +81,8 @@ class _WaterOrderStatusTabState extends State<WaterOrderStatusTab> {
     }
 
     final timestamp = data['timestamp']?.toDate() ?? DateTime.now();
-    final formattedDate = '${timestamp.day}/${timestamp.month}/${timestamp.year}';
+    final formattedDate =
+        '${timestamp.day}/${timestamp.month}/${timestamp.year}';
 
     return Card(
       color: const Color(0xFF40025B),
@@ -186,7 +187,8 @@ class _WaterOrderStatusTabState extends State<WaterOrderStatusTab> {
             return ListView.builder(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               itemCount: orders.length,
-              itemBuilder: (context, index) => _buildOrderItem(context, orders[index]),
+              itemBuilder:
+                  (context, index) => _buildOrderItem(context, orders[index]),
             );
           },
         );
@@ -200,26 +202,32 @@ class _WaterOrderStatusTabState extends State<WaterOrderStatusTab> {
       color: Colors.white,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
-        children: OrderSubTab.values.map((tab) {
-          final label = tab == OrderSubTab.pending ? "Pending" : "Completed";
-          final isSelected = _selectedSubTab == tab;
+        children:
+            OrderSubTab.values.map((tab) {
+              final label =
+                  tab == OrderSubTab.pending ? "Pending" : "Completed";
+              final isSelected = _selectedSubTab == tab;
 
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: OutlinedButton(
-              onPressed: () => setState(() => _selectedSubTab = tab),
-              style: OutlinedButton.styleFrom(
-                backgroundColor: isSelected ? const Color(0xFF40025B) : Colors.transparent,
-                foregroundColor: isSelected ? Colors.white : Colors.deepPurple,
-                side: const BorderSide(color: Colors.deepPurple),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: OutlinedButton(
+                  onPressed: () => setState(() => _selectedSubTab = tab),
+                  style: OutlinedButton.styleFrom(
+                    backgroundColor:
+                        isSelected
+                            ? const Color(0xFF40025B)
+                            : Colors.transparent,
+                    foregroundColor:
+                        isSelected ? Colors.white : Colors.deepPurple,
+                    side: const BorderSide(color: Colors.deepPurple),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
+                  child: Text(label),
                 ),
-              ),
-              child: Text(label),
-            ),
-          );
-        }).toList(),
+              );
+            }).toList(),
       ),
     );
   }

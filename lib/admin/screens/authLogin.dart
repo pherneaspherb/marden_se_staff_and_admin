@@ -4,7 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'authSignUp.dart';
 
 class AuthLoginPage extends StatefulWidget {
-  final String role; // 'admin' or 'staff'
+  final String role;
 
   const AuthLoginPage({Key? key, required this.role}) : super(key: key);
 
@@ -18,7 +18,6 @@ class _AuthLoginPageState extends State<AuthLoginPage> {
   final _passwordController = TextEditingController();
   bool _isLoading = false;
 
-  // Track password visibility
   bool _obscurePassword = true;
 
   void _login() async {
@@ -37,10 +36,11 @@ class _AuthLoginPageState extends State<AuthLoginPage> {
         final user = userCredential.user;
 
         if (user != null) {
-          final doc = await FirebaseFirestore.instance
-              .collection(widget.role == 'admin' ? 'admins' : 'staff')
-              .doc(user.uid)
-              .get();
+          final doc =
+              await FirebaseFirestore.instance
+                  .collection(widget.role == 'admin' ? 'admins' : 'staff')
+                  .doc(user.uid)
+                  .get();
 
           if (doc.exists) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -79,8 +79,9 @@ class _AuthLoginPageState extends State<AuthLoginPage> {
           }
         }
 
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(errorMessage)));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(errorMessage)));
       } finally {
         setState(() => _isLoading = false);
       }
@@ -116,7 +117,6 @@ class _AuthLoginPageState extends State<AuthLoginPage> {
               ),
               const SizedBox(height: 4),
 
-              // Only show Sign-up button if role is admin
               if (widget.role == 'admin')
                 TextButton(
                   onPressed: () {
@@ -159,16 +159,17 @@ class _AuthLoginPageState extends State<AuthLoginPage> {
                           vertical: 15,
                         ),
                       ),
-                      child: _isLoading
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                color: Color(0xFF40025B),
-                                strokeWidth: 2,
-                              ),
-                            )
-                          : const Text('Log In'),
+                      child:
+                          _isLoading
+                              ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  color: Color(0xFF40025B),
+                                  strokeWidth: 2,
+                                ),
+                              )
+                              : const Text('Log In'),
                     ),
                   ],
                 ),
@@ -198,19 +199,20 @@ class _AuthLoginPageState extends State<AuthLoginPage> {
           borderRadius: BorderRadius.circular(6),
           borderSide: BorderSide.none,
         ),
-        suffixIcon: isPassword
-            ? IconButton(
-                icon: Icon(
-                  _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                  color: Colors.white70,
-                ),
-                onPressed: () {
-                  setState(() {
-                    _obscurePassword = !_obscurePassword;
-                  });
-                },
-              )
-            : null,
+        suffixIcon:
+            isPassword
+                ? IconButton(
+                  icon: Icon(
+                    _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                    color: Colors.white70,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _obscurePassword = !_obscurePassword;
+                    });
+                  },
+                )
+                : null,
       ),
       validator: (value) {
         if (value == null || value.isEmpty) return 'Please enter $label';

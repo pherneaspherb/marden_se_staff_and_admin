@@ -114,7 +114,7 @@ class _InventoryWidgetState extends State<InventoryWidget>
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.white, // Set the background to white
+      color: Colors.white,
       child: Column(
         children: [
           Container(
@@ -124,7 +124,10 @@ class _InventoryWidgetState extends State<InventoryWidget>
               labelColor: Colors.white,
               unselectedLabelColor: Colors.white70,
               indicatorColor: Colors.white,
-              tabs: const [Tab(text: 'Laundry Inventory'), Tab(text: 'Water Inventory')],
+              tabs: const [
+                Tab(text: 'Laundry Inventory'),
+                Tab(text: 'Water Inventory'),
+              ],
             ),
           ),
           Expanded(

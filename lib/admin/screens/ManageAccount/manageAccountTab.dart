@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
 class ManageAccountTab extends StatefulWidget {
@@ -54,7 +55,8 @@ class _ManageAccountTabState extends State<ManageAccountTab> {
                 final fullName =
                     "${data['firstName'] ?? ''} ${data['lastName'] ?? ''}";
                 final createdAt =
-                    (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
+                    (data['createdAt'] as Timestamp?)?.toDate() ??
+                    DateTime.now();
 
                 return Card(
                   color: const Color(0xFF40025B),
@@ -118,37 +120,40 @@ class _ManageAccountTabState extends State<ManageAccountTab> {
   void _confirmDelete(BuildContext context, String docId) {
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: const Color(0xFF40025B),
-        title: const Text(
-          'Confirm Deletion',
-          style: TextStyle(color: Colors.white),
-        ),
-        content: const Text(
-          'Are you sure you want to delete this account?',
-          style: TextStyle(color: Colors.white),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text(
-              'Cancel',
+      builder:
+          (_) => AlertDialog(
+            backgroundColor: const Color(0xFF40025B),
+            title: const Text(
+              'Confirm Deletion',
               style: TextStyle(color: Colors.white),
             ),
-          ),
-          TextButton(
-            onPressed: () async {
-              await FirebaseFirestore.instance.collection('staff').doc(docId).delete();
-              // Note: Deleting the Firebase Auth user here requires admin privileges or callable cloud function
-              Navigator.pop(context);
-            },
-            child: const Text(
-              'Delete',
-              style: TextStyle(color: Colors.red),
+            content: const Text(
+              'Are you sure you want to delete this account?',
+              style: TextStyle(color: Colors.white),
             ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text(
+                  'Cancel',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+              TextButton(
+                onPressed: () async {
+                  await FirebaseFirestore.instance
+                      .collection('staff')
+                      .doc(docId)
+                      .delete();
+                  Navigator.pop(context);
+                },
+                child: const Text(
+                  'Delete',
+                  style: TextStyle(color: Colors.red),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
@@ -183,7 +188,14 @@ class _ManageAccountTabState extends State<ManageAccountTab> {
                     const SizedBox(height: 10),
                     _buildInputField('Email', emailController),
                     const SizedBox(height: 10),
-                    _buildInputField('Phone', phoneController),
+                    _buildInputField(
+                      'Phone',
+                      phoneController,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(11),
+                      ],
+                    ),
                     const SizedBox(height: 10),
                     _buildPasswordField(
                       'Password',
@@ -196,7 +208,9 @@ class _ManageAccountTabState extends State<ManageAccountTab> {
                       'Confirm Password',
                       confirmPasswordController,
                       confirmPasswordVisible,
-                      () => setState(() => confirmPasswordVisible = !confirmPasswordVisible),
+                      () => setState(
+                        () => confirmPasswordVisible = !confirmPasswordVisible,
+                      ),
                     ),
                   ],
                 ),
@@ -213,31 +227,45 @@ class _ManageAccountTabState extends State<ManageAccountTab> {
                   onPressed: () async {
                     final password = passwordController.text;
                     final confirmPassword = confirmPasswordController.text;
+                    final phone = phoneController.text.trim();
+
                     if (password != confirmPassword) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Passwords do not match')),
                       );
                       return;
                     }
+
+                    if (phone.length != 11) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Phone number must be exactly 11 digits',
+                          ),
+                        ),
+                      );
+                      return;
+                    }
+
                     try {
                       final auth = FirebaseAuth.instance;
-                      UserCredential userCredential =
-                          await auth.createUserWithEmailAndPassword(
-                        email: emailController.text.trim(),
-                        password: password,
-                      );
+                      UserCredential userCredential = await auth
+                          .createUserWithEmailAndPassword(
+                            email: emailController.text.trim(),
+                            password: password,
+                          );
 
                       await FirebaseFirestore.instance
                           .collection('staff')
                           .doc(userCredential.user!.uid)
                           .set({
-                        'firstName': firstNameController.text.trim(),
-                        'lastName': lastNameController.text.trim(),
-                        'email': emailController.text.trim(),
-                        'phone': phoneController.text.trim(),
-                        'role': 'staff',
-                        'createdAt': Timestamp.now(),
-                      });
+                            'firstName': firstNameController.text.trim(),
+                            'lastName': lastNameController.text.trim(),
+                            'email': emailController.text.trim(),
+                            'phone': phone,
+                            'role': 'staff',
+                            'createdAt': Timestamp.now(),
+                          });
 
                       Navigator.pop(context);
                     } on FirebaseAuthException catch (e) {
@@ -247,16 +275,21 @@ class _ManageAccountTabState extends State<ManageAccountTab> {
                       } else if (e.code == 'weak-password') {
                         errorMsg = 'Password is too weak.';
                       }
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(errorMsg)),
-                      );
+                      ScaffoldMessenger.of(
+                        context,
+                      ).showSnackBar(SnackBar(content: Text(errorMsg)));
                     } catch (e) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('An unexpected error occurred.')),
+                        const SnackBar(
+                          content: Text('An unexpected error occurred.'),
+                        ),
                       );
                     }
                   },
-                  child: const Text('Add', style: TextStyle(color: Colors.white)),
+                  child: const Text(
+                    'Add',
+                    style: TextStyle(color: Colors.white),
+                  ),
                 ),
               ],
             );
@@ -266,12 +299,19 @@ class _ManageAccountTabState extends State<ManageAccountTab> {
     );
   }
 
-  Widget _buildInputField(String label, TextEditingController controller,
-      {bool isPassword = false}) {
+  Widget _buildInputField(
+    String label,
+    TextEditingController controller, {
+    bool isPassword = false,
+    List<TextInputFormatter>? inputFormatters,
+  }) {
     return TextField(
       controller: controller,
       obscureText: isPassword,
       style: const TextStyle(color: Colors.white),
+      keyboardType:
+          label == 'Phone' ? TextInputType.number : TextInputType.text,
+      inputFormatters: inputFormatters,
       decoration: InputDecoration(
         labelText: label,
         labelStyle: const TextStyle(color: Colors.white),
@@ -286,11 +326,11 @@ class _ManageAccountTabState extends State<ManageAccountTab> {
   }
 
   Widget _buildPasswordField(
-      String label,
-      TextEditingController controller,
-      bool isVisible,
-      VoidCallback toggleVisibility,
-      ) {
+    String label,
+    TextEditingController controller,
+    bool isVisible,
+    VoidCallback toggleVisibility,
+  ) {
     return TextField(
       controller: controller,
       obscureText: !isVisible,

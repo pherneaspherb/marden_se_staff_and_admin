@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/services.dart';
 
 class AuthSignUpPage extends StatefulWidget {
-  final String role; // 'admin' or 'staff'
+  final String role;
 
   const AuthSignUpPage({Key? key, required this.role}) : super(key: key);
 
@@ -29,9 +30,7 @@ class _AuthSignUpPageState extends State<AuthSignUpPage> {
   void initState() {
     super.initState();
 
-    // Immediately redirect if role is staff
     if (widget.role == 'staff') {
-      // Delay navigation to avoid setState during build
       WidgetsBinding.instance.addPostFrameCallback((_) {
         Navigator.pushReplacementNamed(context, '/staff-login');
       });
@@ -51,7 +50,8 @@ class _AuthSignUpPageState extends State<AuthSignUpPage> {
     setState(() => _isLoading = true);
 
     try {
-      final userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      final userCredential = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(
         email: _email.text.trim(),
         password: _password.text.trim(),
       );
@@ -61,7 +61,6 @@ class _AuthSignUpPageState extends State<AuthSignUpPage> {
         throw Exception("FirebaseAuth returned null user");
       }
 
-      // Store user data in Firestore collection based on role
       await FirebaseFirestore.instance
           .collection(widget.role == 'admin' ? 'admins' : 'staff')
           .doc(user.uid)
@@ -74,12 +73,10 @@ class _AuthSignUpPageState extends State<AuthSignUpPage> {
         'createdAt': Timestamp.now(),
       });
 
-      // Navigate to respective dashboard
-      if (widget.role == 'admin') {
-        Navigator.pushReplacementNamed(context, '/admin-dashboard');
-      } else {
-        Navigator.pushReplacementNamed(context, '/staff-dashboard');
-      }
+      Navigator.pushReplacementNamed(
+        context,
+        widget.role == 'admin' ? '/admin-dashboard' : '/staff-dashboard',
+      );
     } on FirebaseAuthException catch (e) {
       String message = 'Registration failed';
       if (e.code == 'email-already-in-use') {
@@ -89,7 +86,9 @@ class _AuthSignUpPageState extends State<AuthSignUpPage> {
       } else if (e.code == 'weak-password') {
         message = 'Password is too weak';
       }
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
     } catch (e) {
       print("Unexpected error: $e");
       ScaffoldMessenger.of(context).showSnackBar(
@@ -117,8 +116,10 @@ class _AuthSignUpPageState extends State<AuthSignUpPage> {
     TextInputType type = TextInputType.text,
     bool isPassword = false,
     bool isConfirmPassword = false,
+    List<TextInputFormatter>? inputFormatters,
+    String? Function(String?)? validator,
   }) {
-    bool obscureText = isPassword
+    final bool obscureText = isPassword
         ? (isConfirmPassword ? _obscureConfirmPassword : _obscurePassword)
         : false;
 
@@ -128,9 +129,15 @@ class _AuthSignUpPageState extends State<AuthSignUpPage> {
         controller: controller,
         obscureText: obscureText,
         keyboardType: type,
+        inputFormatters: inputFormatters,
         style: const TextStyle(color: Colors.white),
-        validator: (value) =>
-            value == null || value.trim().isEmpty ? 'Enter $label' : null,
+        validator: validator ??
+            (value) {
+              if (value == null || value.trim().isEmpty) {
+                return 'Enter $label';
+              }
+              return null;
+            },
         decoration: InputDecoration(
           labelText: label,
           labelStyle: const TextStyle(color: Colors.white70),
@@ -162,8 +169,6 @@ class _AuthSignUpPageState extends State<AuthSignUpPage> {
 
   @override
   Widget build(BuildContext context) {
-    // If role is staff, we already redirect in initState
-    // So just render empty container to avoid build issues
     if (widget.role == 'staff') {
       return const Scaffold(
         backgroundColor: Color(0xFF40025B),
@@ -171,7 +176,8 @@ class _AuthSignUpPageState extends State<AuthSignUpPage> {
       );
     }
 
-    String roleCapitalized = widget.role[0].toUpperCase() + widget.role.substring(1);
+    String roleCapitalized =
+        widget.role[0].toUpperCase() + widget.role.substring(1);
 
     return Scaffold(
       backgroundColor: const Color(0xFF40025B),
@@ -204,22 +210,58 @@ class _AuthSignUpPageState extends State<AuthSignUpPage> {
                     controller: _phone,
                     label: 'Phone Number',
                     type: TextInputType.phone,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(11),
+                    ],
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Enter Phone Number';
+                      } else if (value.length != 11) {
+                        return 'Phone number must be 11 digits';
+                      }
+                      return null;
+                    },
                   ),
                   _buildTextField(
                     controller: _email,
                     label: 'Email',
                     type: TextInputType.emailAddress,
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Enter Email';
+                      }
+                      if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
+                        return 'Enter a valid email address';
+                      }
+                      return null;
+                    },
                   ),
                   _buildTextField(
                     controller: _password,
                     label: 'Password',
                     isPassword: true,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Enter Password';
+                      }
+                      if (value.length < 6) {
+                        return 'Password must be at least 6 characters';
+                      }
+                      return null;
+                    },
                   ),
                   _buildTextField(
                     controller: _confirmPassword,
                     label: 'Confirm Password',
                     isPassword: true,
                     isConfirmPassword: true,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Confirm your password';
+                      }
+                      return null;
+                    },
                   ),
                   const SizedBox(height: 24),
                   _isLoading

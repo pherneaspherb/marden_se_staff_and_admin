@@ -11,25 +11,20 @@ class LandingPage extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              const Color(0xFF40025B),
-              const Color(0xFF40025B),
-            ],
+            colors: [const Color(0xFF40025B), const Color(0xFF40025B)],
           ),
         ),
         child: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Logo image instead of icon
               Image.asset(
                 'assets/images/marden.png',
-                width: 120,  // Adjust size to your liking
+                width: 120,
                 height: 120,
                 fit: BoxFit.contain,
               ),
               const SizedBox(height: 20),
-              // App name
               Text(
                 'MARDEN HUB',
                 style: TextStyle(
@@ -39,7 +34,6 @@ class LandingPage extends StatelessWidget {
                   letterSpacing: 1.2,
                 ),
               ),
-              // Tagline
               Text(
                 'Laundry and Water Refilling',
                 style: TextStyle(
@@ -49,7 +43,6 @@ class LandingPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 40),
-              // Buttons row
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -65,7 +58,7 @@ class LandingPage extends StatelessWidget {
                     label: 'Staff',
                   ),
                 ],
-              )
+              ),
             ],
           ),
         ),
@@ -83,9 +76,7 @@ class LandingPage extends StatelessWidget {
         backgroundColor: Colors.white,
         foregroundColor: Colors.deepPurple.shade800,
         padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(30),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
         elevation: 5,
       ),
       onPressed: () => Navigator.pushNamed(context, route),

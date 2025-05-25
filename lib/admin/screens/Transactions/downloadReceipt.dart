@@ -8,7 +8,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 final deepPurple = const PdfColor.fromInt(0xFF673AB7);
 
-/// Pricing model
 class Pricing {
   final Map<String, double> laundryPrices;
   final Map<String, double> extrasPrices;
@@ -21,7 +20,6 @@ class Pricing {
   });
 }
 
-/// Fetch prices dynamically from Firestore
 Future<Pricing> fetchPricing() async {
   final firestore = FirebaseFirestore.instance;
 
@@ -47,7 +45,6 @@ Future<Pricing> fetchPricing() async {
   );
 }
 
-/// Manual key alias map
 final keyAliases = {
   'wash_dry': 'wash_and_dry',
   'pick_up': 'pickup',
@@ -56,36 +53,28 @@ final keyAliases = {
   'per_kg': 'per_kilogram',
 };
 
-/// Normalize and alias key strings
 String _normalizeKey(String key) {
   var cleaned = key.toLowerCase();
 
-  // Replace & with 'and'
   cleaned = cleaned.replaceAll('&', 'and');
 
-  // Remove other punctuation except whitespace
   cleaned = cleaned.replaceAll(RegExp(r'[^\w\s]+'), '');
 
-  // Replace multiple spaces with a single space
   cleaned = cleaned.replaceAll(RegExp(r'\s+'), ' ');
 
-  // Replace spaces with underscores
   cleaned = cleaned.replaceAll(' ', '_');
 
   cleaned = cleaned.trim();
 
-  // Check aliases
   return keyAliases[cleaned] ?? cleaned;
 }
 
-/// Get price safely
 double _getPriceFromMap(Map<String, double> priceMap, String? key) {
   if (key == null) return 0.0;
   final normalizedKey = _normalizeKey(key);
   return priceMap[normalizedKey] ?? 0.0;
 }
 
-/// PDF generation
 Future<Uint8List> _generatePdfBytes(
   Map<String, dynamic> orderData,
   Map<String, dynamic> customerData,
