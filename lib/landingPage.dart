@@ -21,27 +21,32 @@ class LandingPage extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Logo/icon
-              Icon(Icons.local_laundry_service,
-                  size: 80,
-                  color: Colors.white),
+              // Logo image instead of icon
+              Image.asset(
+                'assets/images/marden.png',
+                width: 120,  // Adjust size to your liking
+                height: 120,
+                fit: BoxFit.contain,
+              ),
               const SizedBox(height: 20),
               // App name
               Text(
                 'MARDEN HUB',
                 style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.2),
+                  color: Colors.white,
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.2,
+                ),
               ),
               // Tagline
               Text(
                 'Laundry and Water Refilling',
                 style: TextStyle(
-                    color: Colors.white.withOpacity(0.9),
-                    fontSize: 16,
-                    letterSpacing: 1.1),
+                  color: Colors.white.withOpacity(0.9),
+                  fontSize: 16,
+                  letterSpacing: 1.1,
+                ),
               ),
               const SizedBox(height: 40),
               // Buttons row
@@ -77,8 +82,7 @@ class LandingPage extends StatelessWidget {
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.white,
         foregroundColor: Colors.deepPurple.shade800,
-        padding: const EdgeInsets.symmetric(
-            horizontal: 32, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(30),
         ),
@@ -87,8 +91,7 @@ class LandingPage extends StatelessWidget {
       onPressed: () => Navigator.pushNamed(context, route),
       child: Text(
         label,
-        style: const TextStyle(
-            fontSize: 16, fontWeight: FontWeight.bold),
+        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
       ),
     );
   }
